@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Beam calculator</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="300"></canvas>
+    <!--Units of measure settings-->
+    <div class="settings">
+      <h3>Units settings</h3>
+      <div>
+        <label for="measure-units">Choose the measure unit: </label>
+        <select id="measure-units">
+          <option value="mm" selected>Millimetre (mm)</option>
+          <option value="cm">Centimetre (cm)</option>
+          <option value="dm">Decimetre (dm)</option>
+          <option value="m">Metre (m)</option>
+        </select>
+      </div>
+      <div>
+        <label for="force-units">Choose the unit of force: </label>
+        <select id="force-units">
+          <option value="N" selected>Newton (N)</option>
+          <option value="kN">Kilonewton (kN)</option>
+          <option value="MN">Meganewton (MN)</option>
+        </select>
+      </div>
+    </div>
+    <!--Beam length settings-->
+    <div class="settings">
+      <h3>Setting the beam length</h3>
+      <label for="length">Enter the beam length (<span class="length-measure"></span>): </label>
+      <input type="text" id="length" required size="10" value="1">
+    </div>
+    <!--Beam support settings-->
+    <div class="settings">
+      <h3>Setting the beam supports</h3>
+      <div>
+        <label for="on-left">Support on the left (A): </label>
+        <select id="on-left">
+          <option value="pinned-support" selected>Pinned support</option>
+          <option value="roller-support">Roller support</option>
+          <option value="fixed-support">Fixed support</option>
+          <option value="no-support">No support</option>
+        </select>
+      </div>
+      <div>
+        <label for="on-right">Support on the right (B): </label>
+        <select id="on-right">
+          <option value="pinned-support">Pinned support</option>
+          <option value="roller-support" selected>Roller support</option>
+          <option value="fixed-support">Fixed support</option>
+          <option value="no-support">No support</option>
+        </select>
+      </div>
+    </div>
+    <!--Beam load settings-->
+    <div class="settings">
+      <h3>Setting the beam load</h3>
+      <!--Point load settings-->
+      <div class="load">
+        <dialog id="point-load-dialog">
+          <form method="dialog">
+            <h3>Add a point load</h3>
+            <input type="hidden" name="id">
+            <input type="hidden" name="type" value="point">
+            <label for="point-load-location">Load location (<span class="length-measure"></span>):</label>
+            <input type="text" id="point-load-location" size="10" value="0.5" name="location">
+            <label for="point-load-magnitude">Load magnitude (<span class="force-measure"></span>):</label>
+            <input type="text" id="point-load-magnitude" size="10" value="1" name="magnitude">
+            <label for="point-load-angle">Load angle (degree):</label>
+            <input type="text" id="point-load-angle" size="10" value="90" name="angle">
+            <menu>
+              <button type="reset">Cancel</button>
+              <button type="submit">Add</button>
+            </menu>
+          </form>
+        </dialog>
+        <button type="button" id="add-point-load-btn">Add a point load</button>
+      </div>
+      <!--Moment settings-->
+      <div class="load">
+        <dialog id="moment-dialog">
+          <form method="dialog">
+            <h3>Add a moment</h3>
+            <input type="hidden" name="id">
+            <input type="hidden" name="type" value="moment">
+            <label for="moment-location">Moment location (<span class="length-measure"></span>):</label>
+            <input type="text" id="moment-location" size="10" value="0.5" name="location">
+            <label for="moment-magnitude">Moment magnitude (<span class="force-measure"></span>*<span class="length-measure"></span>):</label>
+            <input type="text" id="moment-magnitude" size="10" value="1" name="magnitude">
+            <p>Positive magnitude (+) Moment counterclockwise;<br>Negative magnitude (-) Moment clockwise</p>
+            <menu>
+              <button type="reset">Cancel</button>
+              <button type="submit">Add</button>
+            </menu>
+          </form>
+        </dialog>
+        <button type="button" id="add-moment-btn">Add a moment</button>
+      </div>
+      <!--Distributed load settings-->
+      <div class="load">
+        <dialog id="distributed-load-dialog">
+          <form method="dialog">
+            <h3>Add a distributed load</h3>
+            <input type="hidden" name="id">
+            <input type="hidden" name="type" value="uniformly-distributed">
+            <label for="dl-start-location">Start location (<span class="length-measure"></span>):</label>
+            <input type="text" id="dl-start-location" size="10" value="0" name="startLocation">
+            <label for="dl-end-location">End location (<span class="length-measure"></span>):</label>
+            <input type="text" id="dl-end-location" size="10" value="0.5" name="endLocation">
+            <label for="dl-magnitude">Load magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
+            <input type="text" id="dl-magnitude" size="10" value="100" name="magnitude">
+            <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
+            <menu>
+              <button type="reset">Cancel</button>
+              <button type="submit">Add</button>
+            </menu>
+          </form>
+        </dialog>
+        <button type="button" id="add-distributed-load-btn">Add a distributed load</button>
+      </div>
+      <!--Trapezoidal load settings-->
+      <div class="load">
+        <dialog id="trapezoidal-load-dialog">
+          <form method="dialog">
+            <h3>Add a trapezoidal load</h3>
+            <input type="hidden" name="id">
+            <input type="hidden" name="type" value="trapezoidal">
+            <label for="tl-start-location">Start location (<span class="length-measure"></span>):</label>
+            <input type="text" id="tl-start-location" size="10" value="0" name="startLocation">
+            <label for="tl-end-location">End location (<span class="length-measure"></span>):</label>
+            <input type="text" id="tl-end-location" size="10" value="0.5" name="endLocation">
+            <label for="tl-start-magnitude">Start magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
+            <input type="text" id="tl-start-magnitude" size="10" value="50" name="startMagnitude">
+            <label for="tl-end-magnitude">End magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
+            <input type="text" id="tl-end-magnitude" size="10" value="-100" name="endMagnitude">
+            <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
+            <menu>
+              <button type="reset">Cancel</button>
+              <button type="submit">Add</button>
+            </menu>
+          </form>
+        </dialog>
+        <button type="button" id="add-trapezoidal-load-btn">Add a trapezoidal load</button>
+      </div>
+    </div>
+    <script src="script.js" type="text/javascript"></script>
+  </body>
+</html>
