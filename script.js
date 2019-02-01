@@ -9,8 +9,7 @@ window.addEventListener("load", function() {
   // point's A and B coordinates on canvas
   var cXA = (CANVAS_WIDTH - BEAM_LENGTH) / 2;
   var cXB = cXA + BEAM_LENGTH;
-  // same for both points
-  var cY = CANVAS_HEIGHT / 2;
+  var cY = CANVAS_HEIGHT / 2; // same for both points
 
   var pointLoadCounter = 1;
   var momentCounter = 1;
@@ -53,8 +52,8 @@ window.addEventListener("load", function() {
       element.innerHTML = forceUnitSelect.value;
     });
   };
-  var changeLoadMeasures = function(loads) {
-    if ((pointLoadCounter + momentCounter + uniDisLoadCounter + trapLoadCounter) > 4) {
+  var changeLoadMeasures = function(loads, counter) {
+    if (counter > 1) {
       loads.forEach(function(load) {
         var loadSpan = document.getElementById(load.id);
         if (loadSpan !== null) {
@@ -71,10 +70,10 @@ window.addEventListener("load", function() {
     }
   };
   var changeMeasures = function() {
-    changeLoadMeasures(pointLoads);
-    changeLoadMeasures(moments);
-    changeLoadMeasures(uniformlyDistributedLoads);
-    changeLoadMeasures(trapezoidalLoads);
+    changeLoadMeasures(pointLoads, pointLoadCounter);
+    changeLoadMeasures(moments, momentCounter);
+    changeLoadMeasures(uniformlyDistributedLoads, uniDisLoadCounter);
+    changeLoadMeasures(trapezoidalLoads, trapLoadCounter);
   }
 
   // set span InnerHTML
@@ -225,7 +224,7 @@ window.addEventListener("load", function() {
   };
 
   var drawDimension = function(length, measure) {
-    var y = CANVAS_HEIGHT - 50;
+    var y = CANVAS_HEIGHT - 25;
     var color = "gray";
     drawLine(cXA, y, cXB, y, 0.5, color);
     drawLine(cXA, y - 20, cXA, y + 20, 0.5, color);
@@ -233,7 +232,7 @@ window.addEventListener("load", function() {
     drawLine(cXB, y - 20, cXB, y + 20, 0.5, color);
     drawLine(cXB - 10, y + 10, cXB + 10, y - 10, 0.25, color);
     var text = length + " (" + measure + ")";
-    ctx.font = "14px sans-serif";
+    ctx.font = "13px sans-serif";
     var x = (CANVAS_WIDTH - ctx.measureText(text).width) / 2;
     ctx.fillStyle = color;
     ctx.fillText(text, x, y - 4);
@@ -327,32 +326,55 @@ window.addEventListener("load", function() {
     ctx.restore();
   };
 
+  var drawLoadSymbol = function(text, posX, posY) {
+    ctx.fillStyle = "Green";
+    ctx.font = "15px sans-serif";
+    ctx.fillText(text, posX, posY);
+  }
+
   // draw point load function
-  var drawPointLoad = function(location, angle) {
-    var x = cXA + BEAM_LENGTH / beamLength * location;
-    drawArrow(x, cY, angle, 100, 30);
+  var drawPointLoad = function(load) {
+    var x = cXA + BEAM_LENGTH / beamLength * load.location;
+    drawArrow(x, cY, load.angle * Math.abs(load.magnitude) / load.magnitude, 90, 30);
+    var sufix = load.sufix;
+    if (sufix === undefined) {
+      sufix = pointLoadCounter;
+    }
+    var text = "F" + sufix;
+    var xPos = x + 90 - load.angle - 9 * (1 + Math.cos(toRadians(load.angle)));
+    if (load.magnitude > 0) {
+      drawLoadSymbol(text, xPos, cY - 4 - 90 * Math.sin(toRadians(load.angle)));
+    } else {
+      drawLoadSymbol(text, xPos, cY + 16 + 90 * Math.sin(toRadians(load.angle)));
+    }
   };
 
   // draw moment function
-  var drawMoment = function(location, magnitude) {
-    var x = cXA + BEAM_LENGTH / beamLength * location;
+  var drawMoment = function(moment) {
+    var x = cXA + BEAM_LENGTH / beamLength * moment.location;
+    var sufix = moment.sufix;
+    if (sufix === undefined) {
+      sufix = momentCounter;
+    }
+    var text = "M" + sufix;
     ctx.save();
     ctx.translate(x, cY);
-    if (magnitude > 0) {
+    if (moment.magnitude > 0) {
       ctx.drawImage(images.counterclockwise, -58, -93, 100, 100);
     } else {
       ctx.drawImage(images.clockwise, -42, -93, 100, 100);
     }
+    drawLoadSymbol(text, -9, -110);
     ctx.restore();
   };
 
   // draw distributed load function
-  var drawDistributedLoad = function(startLocation, endLocation, startMagnitude, endMagnitude, maxMagnitude) {
+  var drawDistributedLoad = function(startLocation, endLocation, startMagnitude, endMagnitude, maxMagnitude, sufix) {
     var startX = cXA + BEAM_LENGTH / beamLength * startLocation;
     var endX = cXA + BEAM_LENGTH / beamLength * endLocation;
     var width = endX - startX;
-    var startHeight = startMagnitude / maxMagnitude * 100; // maxHeight = 100
-    var endHeight = endMagnitude / maxMagnitude * 100;
+    var startHeight = startMagnitude / maxMagnitude * 60; // maxHeight = 90
+    var endHeight = endMagnitude / maxMagnitude * 60;
     var startY = cY - startHeight;
     var endY = cY - endHeight;
 
@@ -376,24 +398,47 @@ window.addEventListener("load", function() {
     drawArrow(endX, cY, calculateAngle(endHeight), Math.abs(endHeight), arrowWidth);
 
     var length = width - space;
+    var newStartX = startX;
 
     while (length > arrowWidth) {
-      startX += space ;
+      newStartX += space ;
       xFromStart += space;
       var height = calculateHeight(xFromStart);
-      drawArrow(startX, cY, calculateAngle(height), Math.abs(height), arrowWidth);
+      drawArrow(newStartX, cY, calculateAngle(height), Math.abs(height), arrowWidth);
       length -= space;
     };
+
+    var counter = sufix;
+    var xPos = startX + width / 2 - 9;
+    var dY = 0;
+    if (calculateHeight(xPos) > 0) {
+      dY += 20;
+    } else {
+      dY -= 7;
+    }
+
+    if (startMagnitude != endMagnitude) {
+      if (counter === undefined) {
+        counter = trapLoadCounter;
+      }
+      drawLoadSymbol("Q" + counter, xPos, cY + dY);
+    } else {
+      if (counter === undefined) {
+        counter = uniDisLoadCounter;
+      }
+      drawLoadSymbol("q" + counter, xPos, cY + dY);
+    }
+
   }
 
   // draw trapezoidal load function
-  var drawTrapezoidalLoad = function(startLocation, endLocation, startMagnitude, endMagnitude, maxMagnitude) {
-    drawDistributedLoad(startLocation, endLocation, startMagnitude, endMagnitude, maxMagnitude);
+  var drawTrapezoidalLoad = function(load, maxMagnitude) {
+    drawDistributedLoad(load.startLocation, load.endLocation, load.startMagnitude, load.endMagnitude, maxMagnitude, load.sufix);
   };
 
   // draw uniformly distributed load function
-  var drawUniformlyDistributedLoad = function(startLocation, endLocation, magnitude, maxMagnitude) {
-    drawDistributedLoad(startLocation, endLocation, magnitude, magnitude, maxMagnitude);
+  var drawUniformlyDistributedLoad = function(load, maxMagnitude) {
+    drawDistributedLoad(load.startLocation, load.endLocation, load.magnitude, load.magnitude, maxMagnitude, load.sufix);
   };
 
   // function for finding maximum magnitude value for all distributed loads
@@ -431,15 +476,15 @@ window.addEventListener("load", function() {
 
       // calling draw point load function
       if (pointLoads.length > 0) {
-        pointLoads.forEach(function(element) {
-          drawPointLoad(element.location, element.angle);
+        pointLoads.forEach(function(pointLoad) {
+          drawPointLoad(pointLoad);
         });
       };
 
       // calling draw moment function
       if (moments.length > 0) {
-        moments.forEach(function(element) {
-          drawMoment(element.location, element.magnitude);
+        moments.forEach(function(moment) {
+          drawMoment(moment);
         });
       };
 
@@ -448,15 +493,15 @@ window.addEventListener("load", function() {
 
       // calling draw distributed load function
       if (uniformlyDistributedLoads.length > 0) {
-        uniformlyDistributedLoads.forEach(function(element) {
-          drawUniformlyDistributedLoad(element.startLocation, element.endLocation, element.magnitude, maxMagnitude);
+        uniformlyDistributedLoads.forEach(function(load) {
+          drawUniformlyDistributedLoad(load, maxMagnitude);
         });
       }
 
       // calling draw trapezoidal load function
       if (trapezoidalLoads.length > 0) {
-        trapezoidalLoads.forEach(function(element) {
-          drawTrapezoidalLoad(element.startLocation, element.endLocation, element.startMagnitude, element.endMagnitude, maxMagnitude);
+        trapezoidalLoads.forEach(function(load) {
+          drawTrapezoidalLoad(load, maxMagnitude);
         });
       }
 
