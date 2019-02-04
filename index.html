@@ -32,7 +32,7 @@
     <div class="settings">
       <h3>Setting the beam length</h3>
       <label for="length">Enter the beam length (<span class="length-measure"></span>): </label>
-      <input type="text" id="length" required size="10" value="1">
+      <input type="text" id="length" required size="10" value="3">
     </div>
     <!--Beam support settings-->
     <div class="settings">
@@ -41,18 +41,18 @@
         <label for="on-left">Support on the left (A): </label>
         <select id="on-left">
           <option value="pinned-support" selected>Pinned support</option>
-          <option value="roller-support">Roller support</option>
+          <!-- <option value="roller-support">Roller support</option>
           <option value="fixed-support">Fixed support</option>
-          <option value="no-support">No support</option>
+          <option value="no-support">No support</option> -->
         </select>
       </div>
       <div>
         <label for="on-right">Support on the right (B): </label>
         <select id="on-right">
-          <option value="pinned-support">Pinned support</option>
+          <!-- <option value="pinned-support">Pinned support</option> -->
           <option value="roller-support" selected>Roller support</option>
-          <option value="fixed-support">Fixed support</option>
-          <option value="no-support">No support</option>
+          <!-- <option value="fixed-support">Fixed support</option> -->
+          <!-- <option value="no-support">No support</option> -->
         </select>
       </div>
     </div>
@@ -131,13 +131,13 @@
             <input type="hidden" name="id">
             <input type="hidden" name="type" value="trapezoidal">
             <label for="tl-start-location">Start location (<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-start-location" size="10" value="0" name="startLocation">
+            <input type="text" id="tl-start-location" size="10" value="1" name="startLocation">
             <label for="tl-end-location">End location (<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-end-location" size="10" value="0.5" name="endLocation">
+            <input type="text" id="tl-end-location" size="10" value="3" name="endLocation">
             <label for="tl-start-magnitude">Start magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-start-magnitude" size="10" value="50" name="startMagnitude">
+            <input type="text" id="tl-start-magnitude" size="10" value="2" name="startMagnitude">
             <label for="tl-end-magnitude">End magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-end-magnitude" size="10" value="-100" name="endMagnitude">
+            <input type="text" id="tl-end-magnitude" size="10" value="12" name="endMagnitude">
             <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
             <menu>
               <button type="reset">Cancel</button>
@@ -148,6 +148,7 @@
         <button type="button" id="add-trapezoidal-load-btn">Add a trapezoidal load</button>
       </div>
     </div>
+    <button id="solve-beam" type="button">SOLVE BEAM</button>
     <script src="script.js" type="text/javascript"></script>
   </body>
 </html>

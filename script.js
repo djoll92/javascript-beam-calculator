@@ -3,8 +3,8 @@ window.addEventListener("load", function() {
   // constants
   var CANVAS_WIDTH = 800;
   var CANVAS_HEIGHT = 300;
-  var CANVAS_BG_COLOR = "#F5F5F5";
   var BEAM_LENGTH = 600;
+  var CANVAS_BG_COLOR = "#F5F5F5";
 
   // point's A and B coordinates on canvas
   var cXA = (CANVAS_WIDTH - BEAM_LENGTH) / 2;
@@ -92,7 +92,6 @@ window.addEventListener("load", function() {
     draw();
   });
 
-
   // grab the beam length value
   var beamLengthInput = document.getElementById("length");
   var beamLength = beamLengthInput.value;
@@ -172,6 +171,11 @@ window.addEventListener("load", function() {
     element.dialog.addEventListener("reset", function() {
       cancelDialog(element.dialog);
     });
+  });
+
+  var solveButton = document.getElementById("solve-beam");
+  solveButton.addEventListener("click", function() {
+    drawDiagram();
   });
 
   var getLoadById = function(id, loads) {
@@ -373,7 +377,7 @@ window.addEventListener("load", function() {
     var startX = cXA + BEAM_LENGTH / beamLength * startLocation;
     var endX = cXA + BEAM_LENGTH / beamLength * endLocation;
     var width = endX - startX;
-    var startHeight = startMagnitude / maxMagnitude * 60; // maxHeight = 90
+    var startHeight = startMagnitude / maxMagnitude * 60; // maxHeight = 60
     var endHeight = endMagnitude / maxMagnitude * 60;
     var startY = cY - startHeight;
     var endY = cY - endHeight;
@@ -629,8 +633,10 @@ window.addEventListener("load", function() {
     inputs.forEach(function(input) {
       if (input.name === "id") {
         load[input.name] = Date.now().toString();
-      } else {
+      } else if (input.name === "type") {
         load[input.name] = input.value;
+      } else {
+        load[input.name] = Number(input.value);
       }
     });
     loads.push(load);
@@ -642,12 +648,336 @@ window.addEventListener("load", function() {
   var processEditDialogForm = function(dialog, load) {
     var inputs = dialog.querySelectorAll("input");
     inputs.forEach(function(input) {
-      load[input.name] = input.value;
+      if (input.name === "type") {
+        load[input.name] = input.value;
+      } else {
+        load[input.name] = Number(input.value);
+      }
     });
     dialog.querySelector("button[type=reset]").click();
     dialog.querySelector("input[name=id]").value = undefined;
     changeMeasures();
     draw();
+  };
+
+  var drawDiagram = function() {
+    var diagramCanvas;
+    if (document.getElementById("diagram-canvas") === null) {
+      diagramCanvas = document.createElement("canvas");
+      diagramCanvas.id = "diagram-canvas";
+      diagramCanvas.width = 800;
+      diagramCanvas.height = 800;
+      document.querySelector("script").parentNode.insertBefore(diagramCanvas, document.querySelector("script"));
+    } else {
+      diagramCanvas = document.getElementById("diagram-canvas");
+    }
+    var ctx = diagramCanvas.getContext("2d");
+    var diagMaxValue = 100;
+    ctx.clearRect(0, 0, 800, 800);
+
+    var pointLoadMoment = function(distance, force) {
+      return force * distance;
+    };
+
+    var distributedLoadMoment = function(load) {
+      var length = load.endLocation - load.startLocation;
+      return pointLoadMoment(load.startLocation + length / 2, load.magnitude * length);
+    };
+
+    var triangularLoadMoment = function(load, distanceFromLoad) {
+      var length = load.endLocation - load.startLocation;
+      var magnitude = 0;
+      var distance = 0;
+      if (load.startMagnitude >= 0) {
+        magnitude = Math.abs(load.endMagnitude - load.startMagnitude);
+      } else {
+        magnitude = -1 * Math.abs(Math.abs(load.endMagnitude) + load.startMagnitude);
+      }
+      if (Math.abs(load.startMagnitude) > Math.abs(load.endMagnitude)) {
+        distance = 1 / 3;
+      }
+      else {
+        distance = 2 / 3;
+      }
+      return pointLoadMoment(distanceFromLoad + length * distance, magnitude * length * 0.5);
+    };
+
+    var getMinLoadMagnitude = function(load) {
+      var minMagnitude = 0;
+      if (load.startMagnitude >= 0) {
+        minMagnitude = Math.min(load.startMagnitude, load.endMagnitude);
+      } else {
+        minMagnitude = Math.max(load.startMagnitude, load.endMagnitude);
+      }
+      return minMagnitude;
+    };
+
+    var trapezoidalLoadMoment = function(load) {
+      var rectangularPart = {startLocation: load.startLocation, endLocation: load.endLocation, magnitude: getMinLoadMagnitude(load)};
+      var rectangularPartPartMoment = distributedLoadMoment(rectangularPart);
+      var triangularPartMoment = triangularLoadMoment(load, load.startLocation);
+      return rectangularPartPartMoment + triangularPartMoment;
+    };
+
+    var calculateYB = function(){
+      var yB = 0;
+      pointLoads.forEach(function(load) {
+        var fX = load.magnitude * Math.sin(toRadians(load.angle));
+        yB += pointLoadMoment(load.location, fX) / beamLength;
+      });
+      moments.forEach(function(moment) {
+        yB -= moment.magnitude / beamLength;
+      });
+      uniformlyDistributedLoads.forEach(function(load) {
+        yB += distributedLoadMoment(load) / beamLength;
+      });
+      trapezoidalLoads.forEach(function(load) {
+        yB += trapezoidalLoadMoment(load) / beamLength;
+      });
+      return yB;
+    };
+
+    var calculateYA = function() {
+      var yA = 0;
+      yA -= calculateYB();
+      pointLoads.forEach(function(load) {
+        var fX = load.magnitude * Math.sin(toRadians(load.angle));
+        yA += fX;
+      });
+      uniformlyDistributedLoads.forEach(function(load) {
+        var length = load.endLocation - load.startLocation;
+        yA += load.magnitude * length;
+      });
+      trapezoidalLoads.forEach(function(load) {
+        var length = load.endLocation - load.startLocation;
+        if (load.startMagnitude > 0) {
+          yA += Math.abs(load.startMagnitude - load.endMagnitude) * length * 0.5;
+        } else {
+          yA += -1 * Math.abs(Math.abs(load.endMagnitude) + load.startMagnitude) * length * 0.5;
+        }
+        yA += getMinLoadMagnitude(load) * length;
+      });
+      return yA;
+    }
+
+    var drawLine = function(x1, y1, x2, y2, lineWidth, lineColor) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.closePath();
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = lineColor;
+      ctx.stroke();
+    };
+
+    var drawDot = function(x, y) {
+      ctx.fillStyle = "blue"
+      ctx.fillRect(x, y, 1, 1);
+    }
+
+    var loadLengthByZ = function(z, load) {
+      return z / BEAM_LENGTH * beamLength - (beamLength - load.endLocation);
+    };
+
+    var momentDots = [];
+    var m = 0;
+    var mBefore;
+    var yB = calculateYB();
+
+    var findMomentDots = function(x) {
+      for (var z = BEAM_LENGTH; z >= 0; z--) {
+        mBefore = m;
+        m = pointLoadMoment(z / BEAM_LENGTH * beamLength, yB);
+        pointLoads.forEach(function(pointLoad) {
+          if (z >= BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
+            var fX = Math.sin(toRadians(pointLoad.angle)) * pointLoad.magnitude;
+            m -= pointLoadMoment(pointLoad.location - beamLength * (1 - z / BEAM_LENGTH), fX);
+          }
+        });
+        moments.forEach(function(moment) {
+          if (z >= BEAM_LENGTH * (1 - moment.location / beamLength)) {
+            m += moment.magnitude * 1;
+          }
+        });
+        uniformlyDistributedLoads.forEach(function(load) {
+          if (z >= BEAM_LENGTH * (1 - load.endLocation / beamLength)) {
+            if (z >= BEAM_LENGTH * (1 - load.startLocation / beamLength)) {
+              var loc = load.startLocation - (BEAM_LENGTH - z) * beamLength / BEAM_LENGTH;
+              var length = load.endLocation - load.startLocation;
+              m -= pointLoadMoment(loc + length / 2, load.magnitude * length);
+            } else {
+              m -= pointLoadMoment(loadLengthByZ(z, load) / 2, load.magnitude * loadLengthByZ(z, load));
+            }
+          }
+        });
+        trapezoidalLoads.forEach(function(load) {
+          var loadLength = load.endLocation - load.startLocation;
+          if (z >= BEAM_LENGTH * (1 - load.endLocation / beamLength)) {
+            if (z >= BEAM_LENGTH * (1 - load.startLocation / beamLength)) {
+              var loc = load.startLocation - (BEAM_LENGTH - z) * beamLength / BEAM_LENGTH;
+              m -= pointLoadMoment(loc + loadLength / 2, getMinLoadMagnitude(load) * loadLength);
+              m -= triangularLoadMoment(load, loc);
+            } else {
+              m -= pointLoadMoment(loadLengthByZ(z, load) / 2, getMinLoadMagnitude(load) * loadLengthByZ(z, load));
+              var dQ = 0;
+              var qZ = 0;
+              if (load.startMagnitude >= 0) {
+                dQ =  Math.abs(load.endMagnitude - load.startMagnitude);
+                if (load.startMagnitude >= load.endMagnitude) {
+                  qZ = dQ * loadLengthByZ(z, load) / loadLength;
+                  m -= pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
+                } else {
+                  var leftZ = beamLength - loadLengthByZ(z, load);
+                  qZ = dQ * (leftZ - load.startLocation) / loadLength;
+                  m -= pointLoadMoment((load.endLocation - leftZ) / 2, qZ * (load.endLocation - leftZ));
+                  m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
+                }
+              } else {
+                dQ = -Math.abs(Math.abs(load.endMagnitude) + load.startMagnitude);
+                if (load.startMagnitude <= load.endMagnitude) {
+                  qZ = dQ * loadLengthByZ(z, load) / loadLength;
+                  m -= pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
+                } else {
+                  var leftZ = beamLength - loadLengthByZ(z, load);
+                  qZ = dQ * leftZ / loadLength;
+                  m -= pointLoadMoment((load.endLocation - leftZ) / 2, qZ * (load.endLocation - leftZ));
+                  m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
+                }
+              }
+            }
+          }
+        });
+        momentDots.push({x, m, mBefore});
+        x++;
+      }
+    }
+    findMomentDots(cXA);
+
+    var tForceDots = [];
+    var tF = 0;
+    var tFBefore;
+    var yA = calculateYA();
+
+    var findTForceDots = function(x) {
+      for (var z = BEAM_LENGTH; z >= 0; z--) {
+        tFBefore = tF;
+        tF = yA;
+        pointLoads.forEach(function(pointLoad) {
+          if (z <= BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
+            var fX = Math.sin(toRadians(pointLoad.angle)) * pointLoad.magnitude;
+            tF -= fX;
+          }
+        });
+        uniformlyDistributedLoads.forEach(function(load) {
+          var length = load.endLocation - load.startLocation;
+          if (z <= BEAM_LENGTH * (1 - load.startLocation / beamLength)) {
+            if (z >= BEAM_LENGTH * (1 - load.endLocation / beamLength)) {
+              tF -= load.magnitude * (length - loadLengthByZ(z, load));
+            } else {
+              tF -= load.magnitude * length;
+            }
+          }
+        });
+        trapezoidalLoads.forEach(function(load) {
+          var length = load.endLocation - load.startLocation;
+          if (z <= BEAM_LENGTH * (1 - load.startLocation / beamLength)) {
+            if (z >= BEAM_LENGTH * (1 - load.endLocation / beamLength)) {
+              var leftZ = length - loadLengthByZ(z, load);
+              tF -= getMinLoadMagnitude(load) * (leftZ);
+              var dQ = Math.abs(Math.abs(load.startMagnitude) - Math.abs(load.endMagnitude));
+              if (Math.abs(load.startMagnitude) >= Math.abs(load.endMagnitude)) {
+                var qZ = dQ * loadLengthByZ(z, load) / length;
+                tF -= (qZ * leftZ + 0.5 * (dQ - qZ) * leftZ) * (Math.abs(load.endMagnitude) / load.endMagnitude);
+              } else {
+                var qZ = dQ * leftZ / length;
+                tF -= 0.5 * qZ * leftZ * (Math.abs(load.endMagnitude) / load.endMagnitude);
+              }
+            } else {
+              tF -= getMinLoadMagnitude(load) * length;
+              if (load.startMagnitude >= 0) {
+                tF -= 0.5 * length * Math.abs(load.startMagnitude - load.endMagnitude);
+              } else {
+                tF -= -0.5 * length * Math.abs(Math.abs(load.startMagnitude) + load.endMagnitude);
+              }
+            }
+          }
+        });
+        if (z == 0) {
+          tF += yB;
+        }
+        tForceDots.push({x, tF, tFBefore});
+        x++;
+      }
+    }
+    findTForceDots(cXA);
+
+    var findMaxMoment = function(dots) {
+      var moms = [];
+      if (dots.length > 0) {
+        dots.forEach(function(dot) {
+          moms.push(Math.abs(dot.m));
+        });
+      }
+      if (moms.length > 0) {
+        return moms.sort(function(a, b) {
+            return b - a;
+          })[0];
+      }
+      return 0;
+    };
+
+    var findMaxTForce = function(dots) {
+      var array = [];
+      if (dots.length > 0) {
+        dots.forEach(function(dot) {
+          array.push(Math.abs(dot.tF));
+        });
+      }
+      if (array.length > 0) {
+        return array.sort(function(a, b) {
+          return b- a;
+        })[0];
+      }
+      return 0;
+    }
+
+    var maxMoment = findMaxMoment(momentDots);
+    var maxTForce =findMaxTForce(tForceDots);
+
+    var precise = function(number, decimals) {
+      return Number.parseFloat(number).toFixed(decimals);
+    };
+
+    var drawMomentDiagram = function(dots){
+      drawLine(cXA, cY, cXB, cY, 1, "Black");
+      dots.forEach(function(dot, index) {
+        var y = cY + dot.m / maxMoment * diagMaxValue;
+        var yBefore = cY + dot.mBefore / maxMoment * diagMaxValue;
+        if (Math.abs(yBefore - y) > 1) {
+          drawLine(dot.x, yBefore, dot.x, y, 1, "blue");
+        }
+        drawDot(dot.x, y);
+        if (index % 20 == 0) {
+          drawLine(dot.x, cY, dot.x, y, 0.5, "gray");
+        }
+      });
+    };
+    var drawTForceDiagram = function(dots) {
+      drawLine(cXA, cY + 220, cXB, cY + 220, 1, "Black");
+      dots.forEach(function(dot, index) {
+        var y = cY + 220 - dot.tF / maxTForce * diagMaxValue;
+        var yBefore = cY + 220 - dot.tFBefore / maxTForce * diagMaxValue;
+        if (Math.abs(yBefore - y) > 1) {
+          drawLine(dot.x, yBefore, dot.x, y, 1, "blue");
+        }
+        drawDot(dot.x, y);
+        if (index % 20 == 0) {
+          drawLine(dot.x, cY + 220, dot.x, y, 0.5, "gray");
+        }
+      });
+    };
+    drawTForceDiagram(tForceDots);
+    drawMomentDiagram(momentDots);
   };
 
   draw();
@@ -657,3 +987,4 @@ window.addEventListener("load", function() {
 // REMOVE LOADS! add IDs
 // !SAME LOADS IN SAME LOCATION
 // Positive force direction?
+// startLocation < endLocation
