@@ -98,8 +98,19 @@ window.addEventListener("load", function() {
 
   // assign value of beam lenght to the variable on every new input
   beamLengthInput.addEventListener("input", function() {
-    beamLength = beamLengthInput.value;
-    draw();
+    if (!beamLengthInput.validity.patternMismatch && !beamLengthInput.validity.valueMissing && beamLengthInput.value != 0) {
+      beamLength = Number(beamLengthInput.value);
+      beamLengthInput.value = beamLength;
+      beamLengthInput.setCustomValidity("")
+      draw();
+    } else {
+      beamLengthInput.setCustomValidity("Positive number expected!");
+      beamLengthInput.reportValidity();
+    }
+  });
+
+  beamLengthInput.addEventListener("mouseleave", function() {
+    beamLengthInput.value = beamLength;
   });
 
   // grab the select elements for setting the beam supports
@@ -132,6 +143,12 @@ window.addEventListener("load", function() {
   // add dialog listeners
   dialogElements.forEach(function(element) {
     element.button.addEventListener("click", function() {
+      pointLoadLocationInput.value = beamLength * 0.5;
+      momentLocationInput.value = beamLength * 0.5;
+      disLoadStartLocationInput.value = 0;
+      disLoadEndLocationInput.value = beamLength;
+      trapLoadStartLocationInput.value = 0;
+      trapLoadEndLocationInput.value = beamLength;
       showDialog(element.dialog);
     });
     element.dialog.addEventListener("submit", function() {
@@ -170,6 +187,136 @@ window.addEventListener("load", function() {
     element.dialog.addEventListener("reset", function() {
       cancelDialog(element.dialog);
     });
+  });
+
+  // Forms validation
+  // Point load form validation
+  var pointLoadLocationInput = document.getElementById("point-load-location");
+  var pointLoadAngleInput = document.getElementById("point-load-angle");
+  pointLoadLocationInput.addEventListener("input", function() {
+    if (Number(pointLoadLocationInput.value) <= Number(beamLength) && !pointLoadLocationInput.validity.patternMismatch) {
+      // var isLocationFree = pointLoads.filter(function(load) {
+      //   return load.location == Number(pointLoadLocationInput.value);
+      // }).length > 0;
+      // if (!isLocationFree) {
+      //   pointLoadLocationInput.setCustomValidity("");
+      // }
+      // else {
+      //   pointLoadLocationInput.setCustomValidity("There is already a point load at a same location.");
+      //   pointLoadLocationInput.reportValidity();
+      // }
+      pointLoadLocationInput.setCustomValidity("");
+    } else {
+      pointLoadLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      pointLoadLocationInput.reportValidity();
+    }
+  });
+  pointLoadAngleInput.addEventListener("input", function() {
+    if (Number(pointLoadAngleInput.value) <= 180 && !pointLoadLocationInput.validity.patternMismatch) {
+      pointLoadAngleInput.setCustomValidity("");
+    } else {
+      pointLoadAngleInput.setCustomValidity("\u2220 value from 0 to 180 degrees expected!");
+      pointLoadAngleInput.reportValidity();
+    }
+  });
+  // Moment form validation
+  var momentLocationInput = document.getElementById("moment-location");
+  momentLocationInput.addEventListener("input", function() {
+    if (Number(momentLocationInput.value) <= Number(beamLength) && !momentLocationInput.validity.patternMismatch) {
+      momentLocationInput.setCustomValidity("");
+    } else {
+      momentLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      momentLocationInput.reportValidity();
+    }
+  });
+  // Distributed load form validation
+  var disLoadStartLocationInput = document.getElementById("dl-start-location");
+  var disLoadEndLocationInput = document.getElementById("dl-end-location");
+  disLoadStartLocationInput.addEventListener("input", function() {
+    if (Number(disLoadStartLocationInput.value) <= Number(beamLength) && !disLoadStartLocationInput.validity.patternMismatch) {
+      if (Number(disLoadEndLocationInput.value) > Number(disLoadStartLocationInput.value)) {
+        disLoadStartLocationInput.setCustomValidity("");
+      } else {
+        disLoadStartLocationInput.setCustomValidity("Start location value must be lower than end location's.");
+        disLoadStartLocationInput.reportValidity();
+      }
+    } else {
+      disLoadStartLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      disLoadStartLocationInput.reportValidity();
+    }
+  });
+  disLoadEndLocationInput.addEventListener("input", function() {
+    if (Number(disLoadEndLocationInput.value) <= Number(beamLength) && !disLoadEndLocationInput.validity.patternMismatch) {
+      if (Number(disLoadEndLocationInput.value) > Number(disLoadStartLocationInput.value)) {
+        disLoadEndLocationInput.setCustomValidity("");
+      } else {
+        disLoadEndLocationInput.setCustomValidity("End location value must be higher than start location's.");
+        disLoadEndLocationInput.reportValidity();
+      }
+    } else {
+      disLoadEndLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      disLoadEndLocationInput.reportValidity();
+    }
+  });
+  // Trapezoidal load form validation
+  var trapLoadStartLocationInput = document.getElementById("tl-start-location");
+  var trapLoadEndLocationInput = document.getElementById("tl-end-location");
+  var trapLoadStartMagnitude = document.getElementById("tl-start-magnitude");
+  var trapLoadEndMagnitude = document.getElementById("tl-end-magnitude");
+  trapLoadStartLocationInput.addEventListener("input", function() {
+    if (Number(trapLoadStartLocationInput.value) <= Number(beamLength) && !trapLoadStartLocationInput.validity.patternMismatch) {
+      if (Number(trapLoadEndLocationInput.value) > Number(trapLoadStartLocationInput.value)) {
+        trapLoadStartLocationInput.setCustomValidity("");
+      } else {
+        trapLoadStartLocationInput.setCustomValidity("Start location value must be lower than end location's.");
+        trapLoadStartLocationInput.reportValidity();
+        console.log(Number(trapLoadEndLocationInput.value) > Number(trapLoadStartLocationInput.value));
+        console.log(Number(trapLoadEndLocationInput.value));
+        console.log(Number(trapLoadStartLocationInput.value));
+      }
+    } else {
+      trapLoadStartLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      trapLoadStartLocationInput.reportValidity();
+    }
+  });
+  trapLoadEndLocationInput.addEventListener("input", function() {
+    if (Number(trapLoadEndLocationInput.value) <= Number(beamLength) && !trapLoadEndLocationInput.validity.patternMismatch) {
+      if (Number(trapLoadEndLocationInput.value) > Number(trapLoadStartLocationInput.value)) {
+        trapLoadEndLocationInput.setCustomValidity("");
+      } else {
+        trapLoadEndLocationInput.setCustomValidity("End location value must be higher than start location's.");
+        trapLoadEndLocationInput.reportValidity();
+      }
+    } else {
+      trapLoadEndLocationInput.setCustomValidity("Enter positive value within the beam length range.");
+      trapLoadEndLocationInput.reportValidity();
+    }
+  });
+  trapLoadStartMagnitude.addEventListener("input", function() {
+    if (!trapLoadStartMagnitude.validity.patternMismatch) {
+      if ((Number(trapLoadStartMagnitude.value) >= 0 && Number(trapLoadEndMagnitude.value) >= 0) || (Number(trapLoadStartMagnitude.value) <= 0 && Number(trapLoadEndMagnitude.value) <= 0 )) {
+        trapLoadStartMagnitude.setCustomValidity("");
+      } else {
+        trapLoadStartMagnitude.setCustomValidity("Start magnitude must have the same direction as the end magnitude.");
+        trapLoadStartMagnitude.reportValidity();
+      }
+    } else {
+      trapLoadStartMagnitude.setCustomValidity("Enter correct magnitude value at the start of a load.");
+      trapLoadStartMagnitude.reportValidity();
+    }
+  });
+  trapLoadEndMagnitude.addEventListener("input", function() {
+    if (!trapLoadEndMagnitude.validity.patternMismatch) {
+      if ((Number(trapLoadEndMagnitude.value) >= 0 && Number(trapLoadStartMagnitude.value) >= 0) || (Number(trapLoadEndMagnitude.value) <= 0 && Number(trapLoadStartMagnitude.value) <= 0 )) {
+        trapLoadEndMagnitude.setCustomValidity("");
+      } else {
+        trapLoadEndMagnitude.setCustomValidity("End magnitude must have the same direction as start magnitude.");
+        trapLoadEndMagnitude.reportValidity();
+      }
+    } else {
+      trapLoadEndMagnitude.setCustomValidity("Enter correct magnitude value at the end of a load.");
+      trapLoadEndMagnitude.reportValidity();
+    }
   });
 
   var solveButton = document.getElementById("solve-beam");
@@ -595,10 +742,10 @@ window.addEventListener("load", function() {
 
   // show modal dialog form function
   var showDialog = function(dialog) {
-    if (beamLength !== "" && beamLength !== 0) {
+    if (!beamLengthInput.validity.patternMismatch && !beamLengthInput.validity.valueMissing && beamLengthInput.value != 0) {
       dialog.showModal();
     } else {
-      alert("Enter the beam length first."); // change to modal
+      beamLengthInput.reportValidity();
     }
   };
 
@@ -716,7 +863,7 @@ window.addEventListener("load", function() {
       }
       var yB = 0;
       pointLoads.forEach(function(load) {
-        var fY = load.magnitude * Math.sin(toRadians(load.angle));
+        var fY = load.magnitude * Math.sin(toRadians(load.angle)).toFixed(10);
         yB += pointLoadMoment(load.location, fY) / beamLength;
       });
       moments.forEach(function(moment) {
@@ -735,7 +882,7 @@ window.addEventListener("load", function() {
       var yA = 0;
       yA -= calculateYB();
       pointLoads.forEach(function(load) {
-        var fY = load.magnitude * Math.sin(toRadians(load.angle));
+        var fY = load.magnitude * Math.sin(toRadians(load.angle)).toFixed(10);
         yA += fY;
       });
       uniformlyDistributedLoads.forEach(function(load) {
@@ -757,7 +904,7 @@ window.addEventListener("load", function() {
     calculateXA = function() {
       var xA = 0;
       pointLoads.forEach(function(load) {
-        var fX = Math.abs(load.magnitude) * Math.cos(toRadians(load.angle));
+        var fX = Math.abs(load.magnitude) * Math.cos(toRadians(load.angle)).toFixed(10);
         xA += fX;
       });
       return -1 * xA;
@@ -792,8 +939,8 @@ window.addEventListener("load", function() {
         mBefore = m;
         m = pointLoadMoment(z / BEAM_LENGTH * beamLength, yB);
         pointLoads.forEach(function(pointLoad) {
-          if (z >= BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
-            var fY = Math.sin(toRadians(pointLoad.angle)) * pointLoad.magnitude;
+          if (z > BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
+            var fY = Math.sin(toRadians(pointLoad.angle)).toFixed(10) * pointLoad.magnitude;
             m -= pointLoadMoment(pointLoad.location - beamLength * (1 - z / BEAM_LENGTH), fY);
           }
         });
@@ -830,9 +977,9 @@ window.addEventListener("load", function() {
                   qZ = dQ * loadLengthByZ(z, load) / loadLength;
                   m -= pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
                 } else {
-                  var leftZ = beamLength - loadLengthByZ(z, load);
-                  qZ = dQ * (leftZ - load.startLocation) / loadLength;
-                  m -= pointLoadMoment((load.endLocation - leftZ) / 2, qZ * (load.endLocation - leftZ));
+                  var leftZ = loadLength - loadLengthByZ(z, load);
+                  qZ = dQ * leftZ / loadLength;
+                  m -= pointLoadMoment(loadLengthByZ(z, load) / 2, qZ * loadLengthByZ(z, load));
                   m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
                 }
               } else {
@@ -841,7 +988,7 @@ window.addEventListener("load", function() {
                   qZ = dQ * loadLengthByZ(z, load) / loadLength;
                   m -= pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
                 } else {
-                  var leftZ = beamLength - loadLengthByZ(z, load);
+                  var leftZ = loadLength - loadLengthByZ(z, load);
                   qZ = dQ * leftZ / loadLength;
                   m -= pointLoadMoment((load.endLocation - leftZ) / 2, qZ * (load.endLocation - leftZ));
                   m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
@@ -850,6 +997,7 @@ window.addEventListener("load", function() {
             }
           }
         });
+        m = m.toFixed(10);
         momentDots.push({x, m, mBefore});
         x++;
       }
@@ -865,7 +1013,7 @@ window.addEventListener("load", function() {
         f = yA;
         pointLoads.forEach(function(pointLoad) {
           if (z <= BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
-            var fY = Math.sin(toRadians(pointLoad.angle)) * pointLoad.magnitude;
+            var fY = Math.sin(toRadians(pointLoad.angle)).toFixed(10) * pointLoad.magnitude;
             f -= fY;
           }
         });
@@ -906,6 +1054,7 @@ window.addEventListener("load", function() {
         if (z == 0) {
           f += yB;
         }
+        f = f.toFixed(10);
         tForceDots.push({x, f, fBefore});
         x++;
       }
@@ -914,17 +1063,17 @@ window.addEventListener("load", function() {
 
     var aForceDots = [];
     var xA = calculateXA();
-    console.log(xA);
     var findAForceDots = function(x, f) {
       for (var z = BEAM_LENGTH; z >= 0; z--) {
         var fBefore = f;
         f = xA;
         pointLoads.forEach(function(pointLoad) {
           if (z <= BEAM_LENGTH * (1 - pointLoad.location / beamLength)) {
-            var fX = Math.cos(toRadians(pointLoad.angle)) * Math.abs(pointLoad.magnitude);
+            var fX = Math.cos(toRadians(pointLoad.angle)).toFixed(10) * Math.abs(pointLoad.magnitude);
             f += fX;
           }
         });
+        f = f.toFixed(10);
         aForceDots.push({x, f, fBefore});
         x++;
       }

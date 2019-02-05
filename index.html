@@ -32,7 +32,7 @@
     <div class="settings">
       <h3>Setting the beam length</h3>
       <label for="length">Enter the beam length (<span class="length-measure"></span>): </label>
-      <input type="text" id="length" required size="10" value="3">
+      <input type="text" id="length" required size="10" pattern="[+]?[0-9]*[.,]?[0-9]+" title="Enter beam length as a positive number.">
     </div>
     <!--Beam support settings-->
     <div class="settings">
@@ -56,11 +56,11 @@
             <input type="hidden" name="id">
             <input type="hidden" name="type" value="point">
             <label for="point-load-location">Load location (<span class="length-measure"></span>):</label>
-            <input type="text" id="point-load-location" size="10" value="0.5" name="location">
+            <input type="text" id="point-load-location" size="10" name="location" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within the beam length range.">
             <label for="point-load-magnitude">Load magnitude (<span class="force-measure"></span>):</label>
-            <input type="text" id="point-load-magnitude" size="10" value="1" name="magnitude">
+            <input type="text" id="point-load-magnitude" size="10" name="magnitude" required pattern="[-+]?[0-9]*[.,]?[0-9]+" title="Enter magnitude value.">
             <label for="point-load-angle">Load angle (degree):</label>
-            <input type="text" id="point-load-angle" size="10" value="90" name="angle">
+            <input type="text" id="point-load-angle" size="10" value="90" name="angle" required pattern="[0-9]*[.,]?[0-9]+" title="&ang; value from 0 to 180 degrees.">
             <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
             <menu>
               <button type="reset">Cancel</button>
@@ -78,9 +78,9 @@
             <input type="hidden" name="id">
             <input type="hidden" name="type" value="moment">
             <label for="moment-location">Moment location (<span class="length-measure"></span>):</label>
-            <input type="text" id="moment-location" size="10" value="0.5" name="location">
+            <input type="text" id="moment-location" size="10" name="location" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within the beam length range.">
             <label for="moment-magnitude">Moment magnitude (<span class="force-measure"></span>*<span class="length-measure"></span>):</label>
-            <input type="text" id="moment-magnitude" size="10" value="1" name="magnitude">
+            <input type="text" id="moment-magnitude" size="10" name="magnitude" required pattern="[-+]?[0-9]*[.,]?[0-9]+" title="Enter magnitude value.">
             <p>Positive magnitude (+) Moment counterclockwise;<br>Negative magnitude (-) Moment clockwise</p>
             <menu>
               <button type="reset">Cancel</button>
@@ -98,11 +98,11 @@
             <input type="hidden" name="id">
             <input type="hidden" name="type" value="uniformly-distributed">
             <label for="dl-start-location">Start location (<span class="length-measure"></span>):</label>
-            <input type="text" id="dl-start-location" size="10" value="0" name="startLocation">
+            <input type="text" id="dl-start-location" size="10" name="startLocation" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within beam length range.">
             <label for="dl-end-location">End location (<span class="length-measure"></span>):</label>
-            <input type="text" id="dl-end-location" size="10" value="0.5" name="endLocation">
+            <input type="text" id="dl-end-location" size="10" name="endLocation" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within beam length range.">
             <label for="dl-magnitude">Load magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
-            <input type="text" id="dl-magnitude" size="10" value="100" name="magnitude">
+            <input type="text" id="dl-magnitude" size="10" name="magnitude" required pattern="[-+]?[0-9]*[.,]?[0-9]+" title="Enter magnitude value.">
             <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
             <menu>
               <button type="reset">Cancel</button>
@@ -120,13 +120,13 @@
             <input type="hidden" name="id">
             <input type="hidden" name="type" value="trapezoidal">
             <label for="tl-start-location">Start location (<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-start-location" size="10" value="1" name="startLocation">
+            <input type="text" id="tl-start-location" size="10" name="startLocation" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within beam length range.">
             <label for="tl-end-location">End location (<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-end-location" size="10" value="3" name="endLocation">
+            <input type="text" id="tl-end-location" size="10" name="endLocation" required pattern="[0-9]*[.,]?[0-9]+" title="Enter positive value within beam length range.">
             <label for="tl-start-magnitude">Start magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-start-magnitude" size="10" value="2" name="startMagnitude">
+            <input type="text" id="tl-start-magnitude" size="10" name="startMagnitude" required pattern="[-+]?[0-9]*[.,]?[0-9]+" title="Enter magnitude value at the start of a load.">
             <label for="tl-end-magnitude">End magnitude (<span class="force-measure"></span>/<span class="length-measure"></span>):</label>
-            <input type="text" id="tl-end-magnitude" size="10" value="12" name="endMagnitude">
+            <input type="text" id="tl-end-magnitude" size="10" name="endMagnitude" required pattern="[-+]?[0-9]*[.,]?[0-9]+" title="Enter magnitude value at the end of a load.">
             <p>Positive magnitude (+) Downwards direction;<br>Negative magnitude (-) Upwards direction</p>
             <menu>
               <button type="reset">Cancel</button>
