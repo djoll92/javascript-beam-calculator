@@ -38,7 +38,7 @@
           <div>
             <label for="beam-type">Beam type</label>
             <select id="beam-type" class="settings">
-              <option value="simply-supported" selected>Simply supported beam</option>
+              <option value="simply-supported" selected>Simply supported</option>
               <option value="cantilever">Cantilever beam</option>
             </select>
           </div>
@@ -59,7 +59,7 @@
         <!--Point load settings-->
         <div class="load">
           <dialog id="point-load-dialog">
-            <form method="dialog">
+            <form method="dialog" autocomplete="off">
               <h3>Add a point load</h3>
               <input type="hidden" name="id">
               <input type="hidden" name="type" value="point">
@@ -80,7 +80,7 @@
         </div>
         <!--Moment settings-->
         <div class="load">
-          <dialog id="moment-dialog">
+          <dialog id="moment-dialog" autocomplete="off">
             <form method="dialog">
               <h3>Add a moment</h3>
               <input type="hidden" name="id">
@@ -101,7 +101,7 @@
         <!--Distributed load settings-->
         <div class="load">
           <dialog id="distributed-load-dialog">
-            <form method="dialog">
+            <form method="dialog" autocomplete="off">
               <h3>Add a distributed load</h3>
               <input type="hidden" name="id">
               <input type="hidden" name="type" value="uniformly-distributed">
@@ -123,7 +123,7 @@
         <!--Trapezoidal load settings-->
         <div class="load">
           <dialog id="trapezoidal-load-dialog">
-            <form method="dialog">
+            <form method="dialog" autocomplete="off">
               <h3>Add a trapezoidal load</h3>
               <input type="hidden" name="id">
               <input type="hidden" name="type" value="trapezoidal">
