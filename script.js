@@ -1,10 +1,21 @@
 window.addEventListener("load", function() {
+  onLoadFunction();
+});
+
+var onLoadFunction = function(){
+  var wrapper = document.querySelector("div[class=wrapper]");
+  var getViewportHeight = function() {
+    var body = document.body;
+    var html = document.documentElement;
+    var height = Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
+    return height;
+  }
+  wrapper.style.height = getViewportHeight() + "px";
 
   // constants
-  var CANVAS_WIDTH = 800;
+  var CANVAS_WIDTH = 760;
   var CANVAS_HEIGHT = 300;
   var BEAM_LENGTH = 600;
-  var CANVAS_BG_COLOR = "#F5F5F5";
 
   // point's A and B coordinates on canvas
   var cXA = (CANVAS_WIDTH - BEAM_LENGTH) / 2;
@@ -83,6 +94,9 @@ window.addEventListener("load", function() {
     resetCounters();
     changeMeasures();
     draw();
+    if (canvas.height == 1000) {
+      drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+    }
   });
   setSpanForce();
   forceUnitSelect.addEventListener("change", function() {
@@ -90,6 +104,9 @@ window.addEventListener("load", function() {
     resetCounters();
     changeMeasures();
     draw();
+    if (canvas.height == 1000) {
+      drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+    }
   });
 
   // grab the beam length value
@@ -103,6 +120,9 @@ window.addEventListener("load", function() {
       beamLengthInput.value = beamLength;
       beamLengthInput.setCustomValidity("")
       draw();
+      if (canvas.height == 1000) {
+        drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+      }
     } else {
       beamLengthInput.setCustomValidity("Positive number expected!");
       beamLengthInput.reportValidity();
@@ -115,6 +135,11 @@ window.addEventListener("load", function() {
 
   // grab the select elements for setting the beam supports
   var beamTypeSelect = document.getElementById("beam-type");
+  beamTypeSelect.addEventListener("change", function() {
+    if (canvas.height == 1000) {
+      drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+    }
+  });
 
   // grab elements for setting the beam load
   var dialogElements = [
@@ -296,6 +321,7 @@ window.addEventListener("load", function() {
     if (!trapLoadStartMagnitude.validity.patternMismatch) {
       if ((Number(trapLoadStartMagnitude.value) >= 0 && Number(trapLoadEndMagnitude.value) >= 0) || (Number(trapLoadStartMagnitude.value) <= 0 && Number(trapLoadEndMagnitude.value) <= 0 )) {
         trapLoadStartMagnitude.setCustomValidity("");
+        trapLoadEndMagnitude.setCustomValidity("");
       } else {
         trapLoadStartMagnitude.setCustomValidity("Start magnitude must have the same direction as the end magnitude.");
         trapLoadStartMagnitude.reportValidity();
@@ -309,6 +335,7 @@ window.addEventListener("load", function() {
     if (!trapLoadEndMagnitude.validity.patternMismatch) {
       if ((Number(trapLoadEndMagnitude.value) >= 0 && Number(trapLoadStartMagnitude.value) >= 0) || (Number(trapLoadEndMagnitude.value) <= 0 && Number(trapLoadStartMagnitude.value) <= 0 )) {
         trapLoadEndMagnitude.setCustomValidity("");
+        trapLoadStartMagnitude.setCustomValidity("");
       } else {
         trapLoadEndMagnitude.setCustomValidity("End magnitude must have the same direction as start magnitude.");
         trapLoadEndMagnitude.reportValidity();
@@ -321,7 +348,18 @@ window.addEventListener("load", function() {
 
   var solveButton = document.getElementById("solve-beam");
   solveButton.addEventListener("click", function() {
-    drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value, canvas);
+    if (beamLengthInput.validity.valid) {
+      if (pointLoads.length + moments.length + uniformlyDistributedLoads.length + trapezoidalLoads.length > 0) {
+        drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+      } else {
+        document.getElementById("message").showModal();
+      }
+    } else {
+      beamLengthInput.reportValidity();
+    }
+  });
+  document.getElementById("message").querySelector("button").addEventListener("click", function() {
+    cancelDialog(document.getElementById("message"));
   });
 
   var getLoadById = function(id, loads) {
@@ -349,6 +387,9 @@ window.addEventListener("load", function() {
   var loadImages = function() {
     images.arrow = new Image();
     images.arrow.src = "img/point_load.svg";
+
+    images.redArrow = new Image();
+    images.redArrow.src = "img/red_arrow.png";
 
     images.counterclockwise = new Image();
     images.counterclockwise.src = "img/counterclockwise_moment.svg";
@@ -390,10 +431,6 @@ window.addEventListener("load", function() {
 
   // draw the beam on the screen
   var drawBeam = function() {
-    // draw background
-    ctx.fillStyle = CANVAS_BG_COLOR;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
     // draw beam
     drawLine(cXA, cY, cXB, cY, 2, "black");
   };
@@ -446,32 +483,32 @@ window.addEventListener("load", function() {
     if (beamType === "simply-supported") {
       drawPinnedSupport(cXA);
       ctx.font = "30px sans-serif";
-      ctx.fillStyle = "red";
-      ctx.fillText("A", cXA - 50, cY + 15);
+      ctx.fillStyle = "Maroon";
+      ctx.fillText("A", cXA - 40, cY - 10);
       drawRollerSupport(cXB);
       ctx.font = "30px sans-serif";
-      ctx.fillStyle = "red";
-      ctx.fillText("B", cXB + 50 - ctx.measureText("B").width, cY + 15);
+      ctx.fillStyle = "Maroon";
+      ctx.fillText("B", cXB + 40 - ctx.measureText("B").width, cY -10);
     } else if (beamType === "cantilever"){
       drawFixedSupport(cXA);
       ctx.font = "30px sans-serif";
-      ctx.fillStyle = "red";
-      ctx.fillText("A", cXA - 50, cY + 15);
+      ctx.fillStyle = "Maroon";
+      ctx.fillText("A", cXA - 40, cY - 10);
     }
   }
 
-  var drawArrow = function(xCoord, yCoord, angle, width, height) {
+  var drawArrow = function(xCoord, yCoord, angle, width, height, arrow) {
     // negating angle so that positive mathematical direction can be counterclockwise
     var degree = toRadians(-angle);
     ctx.save();
     ctx.translate(xCoord, yCoord);
     ctx.rotate(degree);
-    ctx.drawImage(images.arrow, 0 , -height/2, width, height);
+    ctx.drawImage(arrow, 0 , -height/2, width, height);
     ctx.restore();
   };
 
   var drawLoadSymbol = function(text, posX, posY) {
-    ctx.fillStyle = "Green";
+    ctx.fillStyle = "purple";
     ctx.font = "15px sans-serif";
     ctx.fillText(text, posX, posY);
   }
@@ -479,7 +516,7 @@ window.addEventListener("load", function() {
   // draw point load function
   var drawPointLoad = function(load) {
     var x = cXA + BEAM_LENGTH / beamLength * load.location;
-    drawArrow(x, cY, load.angle * Math.abs(load.magnitude) / load.magnitude, 90, 30);
+    drawArrow(x, cY, load.angle * Math.abs(load.magnitude) / load.magnitude, 90, 30, images.arrow);
     var sufix = load.sufix;
     if (sufix === undefined) {
       sufix = pointLoadCounter;
@@ -538,8 +575,8 @@ window.addEventListener("load", function() {
       }
     };
 
-    drawArrow(startX, cY, calculateAngle(startHeight), Math.abs(startHeight), arrowWidth);
-    drawArrow(endX, cY, calculateAngle(endHeight), Math.abs(endHeight), arrowWidth);
+    drawArrow(startX, cY, calculateAngle(startHeight), Math.abs(startHeight), arrowWidth, images.arrow);
+    drawArrow(endX, cY, calculateAngle(endHeight), Math.abs(endHeight), arrowWidth, images.arrow);
 
     var length = width - space;
     var newStartX = startX;
@@ -548,7 +585,7 @@ window.addEventListener("load", function() {
       newStartX += space ;
       xFromStart += space;
       var height = calculateHeight(xFromStart);
-      drawArrow(newStartX, cY, calculateAngle(height), Math.abs(height), arrowWidth);
+      drawArrow(newStartX, cY, calculateAngle(height), Math.abs(height), arrowWidth, images.arrow);
       length -= space;
     };
 
@@ -653,6 +690,9 @@ window.addEventListener("load", function() {
       // draw supports on every change
       beamTypeSelect.addEventListener("change", function(){
         draw();
+        if (canvas.height === 1000) {
+          drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+        }
       });
   };
 
@@ -714,15 +754,16 @@ window.addEventListener("load", function() {
 
   // function creating new HTML elements for every new load submited
   var createLoadElement = function(load, dialog) {
-    var addLoadButton = dialog.parentNode.children[1];  // dialog.parentNode.children[1] = button after dialog element
+    var addLoadButton = document.getElementById("add-trapezoidal-load-btn");  // dialog.parentNode.children[1] = button after dialog element
     var newDiv = document.createElement("div");
     newDiv.id = load.id;
+    newDiv.classList.add("load-element");
     var span = document.createElement("span");
     span.innerHTML = getLoadInfo(load);
     var delBtn = document.createElement("button");
-    delBtn.innerHTML = "remove";
+    delBtn.classList.add("cancel");
     var editBtn = document.createElement("button");
-    editBtn.innerHTML = "edit";
+    editBtn.classList.add("edit");
     newDiv.appendChild(span);
     newDiv.appendChild(delBtn);
     newDiv.appendChild(editBtn);
@@ -733,6 +774,9 @@ window.addEventListener("load", function() {
       resetCounters();
       changeMeasures();
       draw();
+      if (canvas.height == 1000) {
+        drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+      }
     });
 
     editBtn.addEventListener("click", function() {
@@ -778,6 +822,11 @@ window.addEventListener("load", function() {
     loads.push(load);
     dialog.querySelector("button[type=reset]").click(); // click cancel button
     draw();
+    if (canvas.height == 1000) {
+      if (canvas.height == 1000) {
+        drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+      }
+    }
     createLoadElement(load, dialog);
   };
 
@@ -794,24 +843,17 @@ window.addEventListener("load", function() {
     dialog.querySelector("input[name=id]").value = undefined;
     changeMeasures();
     draw();
+    if (canvas.height == 1000) {
+      if (canvas.height == 1000) {
+        drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
+      }
+    }
   };
 
-  var drawDiagram = function(beamType, canvasToCopy) {
-    var diagramCanvas;
-    if (document.getElementById("diagram-canvas") === null) {
-      diagramCanvas = document.createElement("canvas");
-      diagramCanvas.id = "diagram-canvas";
-      diagramCanvas.width = 800;
-      diagramCanvas.height = 900;
-      document.querySelector("script").parentNode.insertBefore(diagramCanvas, document.querySelector("script"));
-    } else {
-      diagramCanvas = document.getElementById("diagram-canvas");
-    }
-    var ctx = diagramCanvas.getContext("2d");
+  var drawDiagram = function(beamType) {
     var diagMaxValue = 90;
-    ctx.clearRect(0, 0, 800, 900);
-    ctx.fillStyle = CANVAS_BG_COLOR;
-    ctx.fillRect(0, 0, 800, 900);
+    canvas.height = 1000;
+    ctx.clearRect(0, 0, 800, 1000);
 
     var pointLoadMoment = function(distance, force) {
       return force * distance;
@@ -910,18 +952,8 @@ window.addEventListener("load", function() {
       return -1 * xA;
     }
 
-    var drawLine = function(x1, y1, x2, y2, lineWidth, lineColor) {
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.closePath();
-      ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = lineColor;
-      ctx.stroke();
-    };
-
     var drawDot = function(x, y) {
-      ctx.fillStyle = "blue"
+      ctx.fillStyle = "MidnightBlue";
       ctx.fillRect(x, y, 1, 1);
     }
 
@@ -983,15 +1015,15 @@ window.addEventListener("load", function() {
                   m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
                 }
               } else {
-                dQ = -Math.abs(Math.abs(load.endMagnitude) + load.startMagnitude);
+                dQ = Math.abs(Math.abs(load.endMagnitude) + load.startMagnitude);
                 if (load.startMagnitude <= load.endMagnitude) {
                   qZ = dQ * loadLengthByZ(z, load) / loadLength;
-                  m -= pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
+                  m += pointLoadMoment(loadLengthByZ(z, load) / 3, qZ * loadLengthByZ(z, load) * 0.5);
                 } else {
                   var leftZ = loadLength - loadLengthByZ(z, load);
                   qZ = dQ * leftZ / loadLength;
-                  m -= pointLoadMoment((load.endLocation - leftZ) / 2, qZ * (load.endLocation - leftZ));
-                  m -= pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
+                  m += pointLoadMoment(loadLengthByZ(z, load) / 2, qZ * loadLengthByZ(z, load));
+                  m += pointLoadMoment(loadLengthByZ(z, load) * 2 / 3, (dQ - qZ) * loadLengthByZ(z, load) * 0.5);
                 }
               }
             }
@@ -1115,16 +1147,16 @@ window.addEventListener("load", function() {
     var maxAForce = findMaxForce(aForceDots);
 
     var drawMomentDiagram = function(dots){
-      drawLine(cXA, cY + 650, cXB, cY + 650, 1, "Black");
+      drawLine(cXA, cY + 660, cXB, cY + 660, 1, "Black");
       dots.forEach(function(dot, index) {
-        var y = cY + 650 + dot.m / maxMoment * diagMaxValue;
-        var yBefore = cY + 650 + dot.mBefore / maxMoment * diagMaxValue;
+        var y = cY + 660 + dot.m / maxMoment * diagMaxValue;
+        var yBefore = cY + 660 + dot.mBefore / maxMoment * diagMaxValue;
         if (Math.abs(yBefore - y) > 1) {
-          drawLine(dot.x, yBefore, dot.x, y, 1, "blue");
+          drawLine(dot.x, yBefore, dot.x, y, 1, "MidnightBlue");
         }
         drawDot(dot.x, y);
         if (index % 20 == 0) {
-          drawLine(dot.x, cY + 650, dot.x, y, 0.5, "gray");
+          drawLine(dot.x, cY + 660, dot.x, y, 0.25, "MidnightBlue");
         }
       });
     };
@@ -1134,31 +1166,128 @@ window.addEventListener("load", function() {
         var y = loc - dot.f / maxF * diagMaxValue;
         var yBefore = loc - dot.fBefore / maxF * diagMaxValue;
         if (Math.abs(yBefore - y) > 1) {
-          drawLine(dot.x, yBefore, dot.x, y, 1, "blue");
+          drawLine(dot.x, yBefore, dot.x, y, 1, "MidnightBlue");
         }
         drawDot(dot.x, y);
         if (index % 20 == 0) {
-          drawLine(dot.x, loc, dot.x, y, 0.5, "gray");
+          drawLine(dot.x, loc, dot.x, y, 0.25, "MidnightBlue");
         }
       });
     };
 
-    ctx.drawImage(canvasToCopy, 0, 0)
-    drawForceDiagram(aForceDots, 400, maxAForce)
-    drawForceDiagram(tForceDots, 600, maxTForce);
+    var precise = function(number, decimals) {
+          return Number.parseFloat(number).toFixed(decimals);
+        };
+
+    var drawGuideLines = function(){
+      var locations = [];
+      var y1 = CANVAS_HEIGHT - 25;
+      var y2 = cY + 660 + diagMaxValue;
+      drawLine(cXA, y1 + 20, cXA, y2, 0.5, "gray");
+      drawLine(cXB, y1 + 20, cXB, y2, 0.5, "gray");
+      pointLoads.forEach(function(load) {
+        var x = cXA + load.location * BEAM_LENGTH / beamLength;
+        drawLine(x, y1, x, y2, 0.5, "gray");
+        locations.push(x);
+      });
+      moments.forEach(function(load) {
+        var x = cXA + load.location * BEAM_LENGTH / beamLength;
+        drawLine(x, y1, x, y2, 0.5, "gray");
+        locations.push(x);
+      });
+      uniformlyDistributedLoads.forEach(function(load) {
+        var x1 = cXA + load.startLocation * BEAM_LENGTH / beamLength;
+        var x2 = cXA + load.endLocation * BEAM_LENGTH / beamLength;
+        drawLine(x1, y1, x1, y2, 0.5, "gray");
+        drawLine(x2, y1, x2, y2, 0.5, "gray");
+        locations.push(x1);
+        locations.push(x2);
+      });
+      trapezoidalLoads.forEach(function(load) {
+        var x1 = cXA + load.startLocation * BEAM_LENGTH / beamLength;
+        var x2 = cXA + load.endLocation * BEAM_LENGTH / beamLength;
+        drawLine(x1, y1, x1, y2, 0.5, "gray");
+        drawLine(x2, y1, x2, y2, 0.5, "gray");
+        locations.push(x1);
+        locations.push(x2);
+      });
+      var sortedLocations = [];
+      if (locations.length > 0) {
+        sortedLocations = locations.sort(function(a, b) {
+          return a - b;
+        });
+      }
+      var xStart = cXA;
+      for (var i = 0; i < sortedLocations.length; i ++) {
+        drawLine(xStart, CANVAS_HEIGHT, sortedLocations[i], CANVAS_HEIGHT, 0.5, "gray");
+        var location = (sortedLocations[i] - xStart) * beamLength / BEAM_LENGTH;
+        var text = location + " (" + measureUnitSelect.value + ")";
+        ctx.font = "13px sans-serif";
+        var x = xStart + (sortedLocations[i] - xStart - ctx.measureText(text).width) / 2;
+        ctx.fillStyle= "gray";
+        ctx.fillText(text, x, CANVAS_HEIGHT - 4);
+        ctx.font = "18px sans-serif";
+        ctx.fillStyle= "red";
+        momentDots.forEach(function(dot) {
+          if (dot.x == sortedLocations[i]) {
+            ctx.fillText(precise(dot.m, 2), dot.x, 810 + dot.m * (diagMaxValue) / maxMoment);
+          }
+          if (dot.m == maxMoment) {
+            ctx.fillText(precise(dot.m, 2), dot.x, 810 + dot.m * (diagMaxValue) / maxMoment);
+          }
+        });
+        tForceDots.forEach(function(dot) {
+          if (dot.x == sortedLocations[i]) {
+            ctx.fillText(precise(dot.f, 2), dot.x, 610 - dot.f * (diagMaxValue) / maxTForce);
+          }
+        });
+        if (maxAForce != 0) {
+          aForceDots.forEach(function(dot) {
+            if (dot.x == sortedLocations[i]) {
+              ctx.fillText(precise(dot.f, 2), dot.x, 410 - dot.f * (diagMaxValue) / maxAForce);
+            }
+          });
+        }
+        xStart = sortedLocations[i];
+      }
+      ctx.fillStyle = "Maroon";
+      drawArrow(cXA, cY + 31, 270, 74, 20, images.redArrow);
+      ctx.font= "15px sans-serif";
+      ctx.fillText("Ya", cXA - 22, cY + 100);
+      if (beamType != "cantilever") {
+        drawArrow(cXB, cY + 36, 270, 69, 20, images.redArrow);
+        ctx.fillText("Yb", cXB + 5, cY + 100);
+        ctx.font = "18px sans-serif";
+        ctx.fillText("Yb = " + precise(yB, 2) + " (" + forceUnitSelect.value + ")", cXB - 50, 20);
+      }
+      ctx.font = "18px sans-serif";
+      ctx.fillText("Ya = " + precise(yA, 2) + " (" + forceUnitSelect.value + ")", cXA - 60, 20);
+      if (xA != 0) {
+        ctx.fillText("Xa = " + precise(xA, 2) + " (" + forceUnitSelect.value + ")", cXA - 60, 40);
+        drawArrow(cXA - 75, cY, 0, 75, 20, images.redArrow);
+        ctx.font= "15px sans-serif";
+        ctx.fillText("Xa", cXA - 73, cY + 22);
+      }
+      ctx.font = "30px sans-serif";
+      ctx.fillStyle = "MidnightBlue";
+      ctx.fillText("Fa", cXA - 50, 420);
+      ctx.fillText("+", cXB + 10, 400);
+      ctx.fillText("-", cXB + 13, 435);
+      ctx.fillText("Ft", cXA - 50, 620);
+      ctx.fillText("+", cXB + 10, 600);
+      ctx.fillText("-", cXB + 13, 635);
+      ctx.fillText("Mz", cXA - 50, 820);
+      ctx.fillText("+", cXB + 10, 835);
+      ctx.fillText("-", cXB + 13, 800);
+    }
+
+    draw();
+    drawGuideLines();
+    drawForceDiagram(aForceDots, 410, maxAForce)
+    drawForceDiagram(tForceDots, 610, maxTForce);
     drawMomentDiagram(momentDots);
+    wrapper.style.height = getViewportHeight() + "px";
+    console.log(getViewportHeight());
   };
-
   draw();
-
-});
-
-// REMOVE LOADS! add IDs
-// !SAME LOADS IN SAME LOCATION
-// Positive force direction?
-// startLocation < endLocation
-
-
-    // var precise = function(number, decimals) {
-    //   return Number.parseFloat(number).toFixed(decimals);
-    // };
+}
