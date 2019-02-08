@@ -164,9 +164,11 @@ var onLoadFunction = function(){
       button: document.getElementById("add-trapezoidal-load-btn")
     }
   ];
+  dialogPolyfill.registerDialog(document.getElementById("message"));
 
   // add dialog listeners
   dialogElements.forEach(function(element) {
+    dialogPolyfill.registerDialog(element.dialog);
     element.button.addEventListener("click", function() {
       pointLoadLocationInput.value = beamLength * 0.5;
       momentLocationInput.value = beamLength * 0.5;
