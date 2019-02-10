@@ -136,6 +136,7 @@ var onLoadFunction = function(){
   // grab the select elements for setting the beam supports
   var beamTypeSelect = document.getElementById("beam-type");
   beamTypeSelect.addEventListener("change", function() {
+    draw();
     if (canvas.height == 1000) {
       drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
     }
@@ -689,13 +690,6 @@ var onLoadFunction = function(){
 
       drawDimension(beamLength, measureUnitSelect.value);
 
-      // draw supports on every change
-      beamTypeSelect.addEventListener("change", function(){
-        draw();
-        if (canvas.height === 1000) {
-          drawDiagram(beamTypeSelect[beamTypeSelect.selectedIndex].value);
-        }
-      });
   };
 
   // function that returns key load parameters
