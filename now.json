@@ -9,14 +9,6 @@
     {
       "src": "/(.*)",
       "headers": { "cache-control": "max-age=31104000, s-maxage=31104000" }
-    },
-    {
-      "src": "/dialog-polyfill.css",
-      "headers": { "accept-encoding": "gzip" }
-    },
-    {
-      "src": "/img/(.*)",
-      "headers": { "accept-encoding": "gzip" }
     }
   ]
 }
