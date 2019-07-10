@@ -3,8 +3,8 @@
   "alias": "beam-calculator.now.sh",
   "routes": [
     {
-      "src": "/images/(.*)",
-      "headers": { "cache-control": "max-age=31104000, s-maxage=31104000" },
+      "src": "/img/(.*)",
+      "headers": { "cache-control": "max-age=0, s-maxage=31104000" },
       "dest": "/images/$1"
     }
   ]
