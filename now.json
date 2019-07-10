@@ -13,6 +13,10 @@
     {
       "src": "/(.*)",
       "headers": { "accept-encoding": "gzip" }
+    },
+    {
+      "src": "/img/(.*)",
+      "headers": { "accept-encoding": "gzip" }
     }
   ]
 }
