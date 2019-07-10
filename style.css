@@ -222,3 +222,66 @@ h3 {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
+@media only screen and (max-width: 1024px) {
+  .wrapper {
+    width: 100%;
+  }
+  .main-canvas {
+    position: relative;
+    width: 100%;
+		top: 200px;
+  }
+  .left-side, .right-side {
+    width: 50%;
+    position: relative;
+    margin-top: 50px;
+  }
+  .right-side {
+    position: absolute;
+    right: 0;
+  }
+  #canvas {
+    margin-left: 5%;
+    background-size: 100% auto;
+    width: 90%;
+  }
+  .settings, .load, .load button, .load-element {
+    width: 90%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .settings select, .load button {
+    font-size: 26px;
+  }
+  .settings label, .right-side h3 {
+    font-size: 24px;
+    width: 100%;
+  }
+  .settings input {
+    font-size: 26px;
+  }
+  .load {
+    margin-top: 20px;
+  }
+  .load button {
+    padding: 15px;
+  }
+  .right-side dialog input, .right-side dialog {
+		font-size: 26px;
+	}
+	.right-side dialog p, .load-element span {
+		font-size: 24px;	
+	}
+	.cancel, .edit {
+		width: 26px !important;
+		padding: 0 !important;
+		margin: 0 0 0 5px !important;
+		height: 26px;
+		background-size: 24px;
+	}	
+	.load-element {
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+}
