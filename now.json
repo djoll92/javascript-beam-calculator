@@ -4,7 +4,7 @@
   "routes": [
     {
       "src": "/images/(.*)",
-      "headers": { "cache-control": "s-maxage=604800" },
+      "headers": { "cache-control": "max-age=0, s-maxage=604800" },
       "dest": "/images/$1"
     }
   ],
