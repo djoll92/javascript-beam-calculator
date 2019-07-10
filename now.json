@@ -4,8 +4,8 @@
   "routes": [
     {
       "src": "/img/(.*)",
-      "headers": { "cache-control": "max-age=0, s-maxage=31104000" },
-      "dest": "/images/$1"
+      "headers": { "cache-control": "max-age=31104000, s-maxage=31104000" },
+      "dest": "/img/$1"
     }
   ]
 }
