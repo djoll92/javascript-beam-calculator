@@ -1,4 +1,11 @@
 {
   "version": 2,
-  "alias": "beam-calculator.now.sh"
+  "alias": "beam-calculator.now.sh",
+  "routes": [
+    {
+      "src": "/images/(.*)",
+      "headers": { "cache-control": "s-maxage=604800" },
+      "dest": "/images/$1"
+    }
+  ],
 }
