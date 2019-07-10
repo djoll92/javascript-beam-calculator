@@ -10,7 +10,8 @@
     {
       "src": "/(.*)",
       "headers": { "cache-control": "max-age=31104000, s-maxage=31104000" },
-      "dest": "/$1"
+      "dest": "/$1",
+      "accept-encoding": "gzip"
     }
   ]
 }
