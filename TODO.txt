@@ -1,0 +1,3 @@
+STYLE
+  buttons -> background-color, cursor
+  select -> implement select2
