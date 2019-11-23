@@ -1,3 +1,5 @@
 STYLE
   buttons -> background-color, cursor
   select -> implement select2
+BACKEND
+  implement persistance and sharing
